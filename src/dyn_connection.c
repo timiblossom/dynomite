@@ -115,7 +115,7 @@ conn_to_ctx(struct conn *conn)
         pool = server->owner;
     }
 
-    return pool->ctx;
+    return pool ? pool->ctx : NULL;
 }
 
 static rstatus_t
