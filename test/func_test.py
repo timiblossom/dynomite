@@ -49,7 +49,9 @@ def main(args):
     d = DynoNode(host="localhost", port=dyno_port)
     r_c = r.get_connection()
     d_c = d.get_connection()
+    print "Running get_set func test"
     run_get_set(r_c, d_c)
+    print "All test ran fine"
     return 0
 
 if __name__ == "__main__":
