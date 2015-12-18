@@ -7,6 +7,7 @@ import time
 from utils import string_generator
 from dyno_node import DynoNode
 from redis_node import RedisNode
+from dual_run import dual_run
 
 class ResultMismatchError(Exception):
     def __init__(self, r_result, d_result):
@@ -31,39 +32,31 @@ def get_dyno_connection(dyno_port):
     d = redis.StrictRedis(host='localhost', port=dyno_port, db=0)
     return d
 
-def run_key_value_tests(r, d):
+def create_key(test_name, key_id):
+    return test_name + "_" + str(key_id)
+
+def run_key_value_tests(r, d, max_keys=1000, max_payload=1024):
     #Set some
-    max_keys = 1000
+    test_name="key_value"
+    c = dual_run(r, d)
     for x in range(0, max_keys):
-        key = __name__ + str(x)
+        key = create_key(test_name, x)
         value = string_generator(size=random.randint(512, 1024))
-        r_result = r.set(key, value)
-        d_result = d.set(key, value)
+        c.run_verify("set", key, value)
     # get them and see
     for x in range(0, max_keys):
-        key = __name__ + str(x)
-        r_result = r.get(key)
-        d_result = d.get(key)
-        assert r_result == d_result, ResultMismatchError(r_result, d_result)
+        key = create_key(test_name, x)
+        c.run_verify("get", key)
     # append a key
-    key = __name__ + str(random.randint(0, max_keys-1))
+    key = create_key(test_name, random.randint(0, max_keys-1))
     value = string_generator()
-    r_result = r.append(key, value)
-    d_result = d.append(key, value)
-    assert r_result == d_result, ResultMismatchError(r_result, d_result)
-    r_result = r.get(key)
-    d_result = d.get(key)
-    assert r_result == d_result, ResultMismatchError(r_result, d_result)
+    c.run_verify("append", key, value)
+    c.run_verify("get", key)
     # expire a few
-    key = __name__ + str(random.randint(0, max_keys-1))
-    r_result = r.expire(key, 5)
-    d_result = d.expire(key, 5)
-    assert r_result == d_result, ResultMismatchError(r_result, d_result)
+    key = create_key(test_name, random.randint(0, max_keys-1))
+    c.run_verify("expire", key, 5)
     time.sleep(7);
-    r_result = r.exists(key)
-    d_result = d.exists(key)
-    assert r_result == d_result, ResultMismatchError(r_result, d_result)
-
+    c.run_verify("exists", key)
 
 def main(args):
     redis_port = args.redis_port
@@ -74,6 +67,8 @@ def main(args):
     d_c = d.get_connection()
     print "Running get_set func test"
     run_key_value_tests(r_c, d_c)
+    print "Running large payload get_set func test"
+    run_key_value_tests(r_c, d_c, max_payload=16384*1024)
     print "All test ran fine"
     return 0
 
