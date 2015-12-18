@@ -50,6 +50,7 @@ def main(args):
     r_c = r.get_connection()
     d_c = d.get_connection()
     run_get_set(r_c, d_c)
+    return 0
 
 if __name__ == "__main__":
     args = parse_args()
