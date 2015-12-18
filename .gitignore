@@ -72,3 +72,4 @@ Makefile.in
 /src/test
 cscope.out
 /src/cscope.out
+/src/test/*.pyc
