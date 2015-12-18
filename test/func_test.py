@@ -3,6 +3,7 @@ import redis
 import argparse
 import random
 import string 
+import time
 from utils import string_generator
 from dyno_node import DynoNode
 from redis_node import RedisNode
@@ -54,6 +55,14 @@ def run_key_value_tests(r, d):
     d_result = d.get(key)
     assert r_result == d_result, ResultMismatchError(r_result, d_result)
     # expire a few
+    key = __name__ + str(random.randint(0, max_keys-1))
+    r_result = r.expire(key, 5)
+    d_result = d.expire(key, 5)
+    assert r_result == d_result, ResultMismatchError(r_result, d_result)
+    time.sleep(7);
+    r_result = r.exists(key)
+    d_result = d.exists(key)
+    assert r_result == d_result, ResultMismatchError(r_result, d_result)
 
 
 def main(args):
