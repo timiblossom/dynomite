@@ -30,17 +30,31 @@ def get_dyno_connection(dyno_port):
     d = redis.StrictRedis(host='localhost', port=dyno_port, db=0)
     return d
 
-def run_get_set(r, d):
-    for x in range(0, 1000):
+def run_key_value_tests(r, d):
+    #Set some
+    max_keys = 1000
+    for x in range(0, max_keys):
         key = __name__ + str(x)
         value = string_generator(size=random.randint(512, 1024))
         r_result = r.set(key, value)
         d_result = d.set(key, value)
-    for x in range(0, 1000):
+    # get them and see
+    for x in range(0, max_keys):
         key = __name__ + str(x)
         r_result = r.get(key)
         d_result = d.get(key)
         assert r_result == d_result, ResultMismatchError(r_result, d_result)
+    # append a key
+    key = __name__ + str(random.randint(0, max_keys-1))
+    value = string_generator()
+    r_result = r.append(key, value)
+    d_result = d.append(key, value)
+    assert r_result == d_result, ResultMismatchError(r_result, d_result)
+    r_result = r.get(key)
+    d_result = d.get(key)
+    assert r_result == d_result, ResultMismatchError(r_result, d_result)
+    # expire a few
+
 
 def main(args):
     redis_port = args.redis_port
@@ -50,7 +64,7 @@ def main(args):
     r_c = r.get_connection()
     d_c = d.get_connection()
     print "Running get_set func test"
-    run_get_set(r_c, d_c)
+    run_key_value_tests(r_c, d_c)
     print "All test ran fine"
     return 0
 
