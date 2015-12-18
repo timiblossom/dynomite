@@ -24,6 +24,6 @@ cp `which memcached` test/_binaries/
 
 cd test
 
-./func_test.py
+#./func_test.py
 
 
