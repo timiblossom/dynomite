@@ -24,23 +24,29 @@ cp `which redis-cli` test/_binaries/
 cd test
 
 # launch processes
-./_binaries/redis-server --port 1212 > ./logs/redis_standalone.log &
-./_binaries/redis-server --port 22121 > ./logs/redis_22121.log &
-./_binaries/redis-server --port 22122 > ./logs/redis_22122.log &
-./_binaries/redis-server --port 22123 > ./logs/redis_22123.log &
-./_binaries/redis-server --port 22124 > ./logs/redis_22124.log &
-./_binaries/redis-server --port 22125 > ./logs/redis_22125.log &
-./_binaries/dynomite -d -o ./logs/a_dc1.log \
-                     -c ./conf/a_dc1.yml -s 22221 -M100000 -v6
-./_binaries/dynomite -d -o ./logs/a_dc2_rack1_node1.log \
-                     -c ./conf/a_dc2_rack1_node1.yml -s 22222 -M100000 -v6
-./_binaries/dynomite -d -o ./logs/a_dc2_rack1_node2.log \
-                     -c ./conf/a_dc2_rack1_node2.yml -s 22223 -M100000 -v6
-./_binaries/dynomite -d -o ./logs/a_dc2_rack2_node1.log \
-                     -c ./conf/a_dc2_rack2_node1.yml -s 22224 -M100000 -v6
-./_binaries/dynomite -d -o ./logs/a_dc2_rack2_node2.log \
-                     -c ./conf/a_dc2_rack2_node2.yml -s 22225 -M100000 -v6
+function launch_redis() {
+    ./_binaries/redis-server --port 1212 > ./logs/redis_standalone.log &
+    ./_binaries/redis-server --port 22121 > ./logs/redis_22121.log &
+    ./_binaries/redis-server --port 22122 > ./logs/redis_22122.log &
+    ./_binaries/redis-server --port 22123 > ./logs/redis_22123.log &
+    ./_binaries/redis-server --port 22124 > ./logs/redis_22124.log &
+    ./_binaries/redis-server --port 22125 > ./logs/redis_22125.log &
+}
+function launch_dynomite() {
+    ./_binaries/dynomite -d -o ./logs/a_dc1.log \
+                         -c ./conf/a_dc1.yml -s 22221 -M100000 -v6
+    ./_binaries/dynomite -d -o ./logs/a_dc2_rack1_node1.log \
+                         -c ./conf/a_dc2_rack1_node1.yml -s 22222 -M100000 -v6
+    ./_binaries/dynomite -d -o ./logs/a_dc2_rack1_node2.log \
+                         -c ./conf/a_dc2_rack1_node2.yml -s 22223 -M100000 -v6
+    ./_binaries/dynomite -d -o ./logs/a_dc2_rack2_node1.log \
+                         -c ./conf/a_dc2_rack2_node1.yml -s 22224 -M100000 -v6
+    ./_binaries/dynomite -d -o ./logs/a_dc2_rack2_node2.log \
+                         -c ./conf/a_dc2_rack2_node2.yml -s 22225 -M100000 -v6
+}
 
+launch_redis
+launch_dynomite
 DYNOMITE_NODES=`pgrep dynomite | wc -l`
 REDIS_NODES=`pgrep redis-server | wc -l`
 
@@ -52,6 +58,8 @@ if [[ $REDIS_NODES -ne 6 ]]; then
     print "Not all redis nodes are running"
     exit 1
 fi
+
+sleep 10
 
 ./func_test.py --redis_port 1212 --dyno_port 8102
 
