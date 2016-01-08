@@ -45,6 +45,23 @@ function launch_dynomite() {
                          -c ./conf/a_dc2_rack2_node2.yml -s 22225 -M100000 -v6
 }
 
+function kill_redis() {
+    killall redis-server
+}
+
+function kill_dynomite() {
+    killall dynomite
+}
+
+declare -i RESULT
+RESULT=0
+
+function cleanup_and_exit() {
+    kill_redis
+    kill_dynomite
+    exit $RESULT
+}
+
 launch_redis
 launch_dynomite
 DYNOMITE_NODES=`pgrep dynomite | wc -l`
@@ -52,30 +69,34 @@ REDIS_NODES=`pgrep redis-server | wc -l`
 
 if [[ $DYNOMITE_NODES -ne 5 ]]; then
     print "Not all dynomite nodes are running"
-    exit 1
+    RESULT=1
+    cleanup_and_exit
 fi
 if [[ $REDIS_NODES -ne 6 ]]; then
     print "Not all redis nodes are running"
-    exit 1
+    RESULT=1
+    cleanup_and_exit
 fi
 
 sleep 10
 
-./func_test.py --redis_port 1212 --dyno_port 8102
+./func_test.py --debug
+RESULT=$?
+echo $RESULT
 
 DYNOMITE_NODES=`pgrep dynomite | wc -l`
 REDIS_NODES=`pgrep redis-server | wc -l`
 
 if [[ $DYNOMITE_NODES -ne 5 ]]; then
     print "Not all dynomite nodes are running"
-    exit 1
+    RESULT=1
+    cleanup_and_exit
 fi
 if [[ $REDIS_NODES -ne 6 ]]; then
     print "Not all redis nodes are running"
-    exit 1
+    RESULT=1
+    cleanup_and_exit
 fi
 
-killall dynomite
-killall redis-server
-
+cleanup_and_exit
 
